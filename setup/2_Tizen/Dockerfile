@@ -14,21 +14,15 @@ ENV DEBIAN_FRONTEND=noninteractive \
  TIZEN_VERSION=10.0
 
 # --- Install build dependencies ---
-RUN apt-get update && apt-get install -y --no-install-recommends \
-   git curl wget python3 python3-pip \
-   gbs mic createrepo \
-   repo \
-   build-essential gcc-aarch64-linux-gnu \
-   libssl-dev libffi-dev \
-   sudo kmod \
-   openssh-client \
+RUN echo "deb [trusted=yes] http://download.tizen.org/tools/latest-release/Ubuntu_22.04/ /" \
+      > /etc/apt/sources.list.d/tizen.list \
+ && apt-get update && apt-get install -y --no-install-recommends \
+      git curl wget python3 python3-pip \
+      gbs mic createrepo-c \
+      build-essential gcc-aarch64-linux-gnu \
+      libssl-dev libffi-dev \
+      sudo kmod openssh-client \
  && rm -rf /var/lib/apt/lists/*
-
-# --- Install Tizen GBS repo ---
-RUN echo "deb http://download.tizen.org/tools/ubuntu/ jammy main" | \
-   tee /etc/apt/sources.list.d/tizen-tools.list && \
- apt-get update && apt-get install -y gbs mic && \
- rm -rf /var/lib/apt/lists/*
 
 # --- Setup build user (GBS doesn't like root) ---
 RUN useradd -m -u 1000 builder && \
@@ -80,9 +74,8 @@ RUN mkdir -p /workspace/output && \
 # --- Final: Lightweight output stage ---
 FROM ubuntu:22.04 AS output
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-   curl awscli \
- && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends curl  && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /workspace/output /output
 
